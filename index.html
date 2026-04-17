@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ระบบจัดการสินค้าหมดอายุ</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background-color: #f0f2f5; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; }
+        
+        /* ส่วนฟอร์มกรอกข้อมูล */
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; flex: 1; min-width: 150px; }
+        button { padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #218838; }
+
+        /* ส่วนตาราง */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        .expired { background-color: #ffdce0; color: #d9534f; font-weight: bold; }
+        .warning { background-color: #fff4d1; color: #856404; font-weight: bold; }
+        .delete-btn { background-color: #dc3545; padding: 5px 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📦 เพิ่มรายการสินค้า</h2>
+    
+    <div class="input-group">
+        <input type="text" id="prodName" placeholder="ชื่อสินค้า เช่น นมสด">
+        <input type="date" id="prodDate">
+        <button onclick="addProduct()">เพิ่มสินค้า</button>
+    </div>
+
+    <hr>
+
+    <h3>📋 รายการทั้งหมด</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ชื่อสินค้า</th>
+                <th>วันหมดอายุ</th>
+                <th>สถานะ</th>
+                <th>จัดการ</th>
+            </tr>
+        </thead>
+        <tbody id="productTable">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    // อาร์เรย์เก็บข้อมูลสินค้า
+    let products = [];
+
+    function addProduct() {
+        const nameInput = document.getElementById("prodName");
+        const dateInput = document.getElementById("prodDate");
+
+        if (nameInput.value === "" || dateInput.value === "") {
+            alert("กรุณากรอกข้อมูลให้ครบถ้วนครับ");
+            return;
+        }
+
+        // เพิ่มข้อมูลลงในอาร์เรย์
+        const newProduct = {
+            id: Date.now(),
+            name: nameInput.value,
+            expiry: dateInput.value
+        };
+
+        products.push(newProduct);
+        
+        // ล้างช่องกรอกข้อมูล
+        nameInput.value = "";
+        dateInput.value = "";
+
+        renderTable();
+    }
+
+    function deleteProduct(id) {
+        products = products.filter(p => p.id !== id);
+        renderTable();
+    }
+
+    function renderTable() {
+        const tableBody = document.getElementById("productTable");
+        tableBody.innerHTML = ""; // ล้างตารางก่อนวาดใหม่
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        products.forEach(item => {
+            const exp = new Date(item.expiry);
+            const diff = Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
+            
+            let status = "✅ ปกติ";
+            let rowClass = "";
+
+            if (diff < 0) {
+                status = "❌ หมดอายุแล้ว";
+                rowClass = "expired";
+            } else if (diff <= 3) {
+                status = `⚠️ อีก ${diff} วันหมดอายุ`;
+                rowClass = "warning";
+            }
+
+            tableBody.innerHTML += `
+                <tr class="${rowClass}">
+                    <td>${item.name}</td>
+                    <td>${item.expiry}</td>
+                    <td>${status}</td>
+                    <td><button class="delete-btn" onclick="deleteProduct(${item.id})">ลบ</button></td>
+                </tr>
+            `;
+        });
+    }
+</script>
+
+</body>
+</html>
